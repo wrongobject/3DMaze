@@ -2,7 +2,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-
 public class Move : MonoBehaviour
 {
     const float SPEED_SCALE = 0.01f;
@@ -46,7 +45,11 @@ public class Move : MonoBehaviour
     public void Init()
     {
         current = back = front = 0;
+        
+        int x, y, z;
+        _maze.TransIndex(0, out x, out y, out z);
 
+        transform.position = new Vector3(x,y,z);
     }
     private void Update()
     {
@@ -76,24 +79,30 @@ public class Move : MonoBehaviour
     void StepMove(Vector3 dir)
     {
         int x, y, z;
-        if (back >= 0 && CheckNear(backPos))
+        Vector3 moveDir = Vector3.zero;
+        if ( back >= 0 && CheckNear(backPos))
         {
             current = back;
+
             if (dict.TryGetValue(current, out List<int> list))
             {
                 foreach (var item in list)
                 {
                     _maze.TransIndex(item, out x, out y, out z);
                     Vector3 pos = new Vector3(x, y, z) * _scale;
-                    Vector3 posDir = pos - transform.position;
+                    Vector3 posDir = (pos - transform.position).normalized;
                     float dot = Vector3.Dot(posDir, dir);
                     if (dot > 0.7f)
                     {
+                        frontPos = backPos;
                         backPos = pos;
+                        front = back;
+                        back = item;                        
+                        moveDir = posDir;
                         break;
                     }
                 }
-               
+
             }
             else
             {
@@ -103,7 +112,47 @@ public class Move : MonoBehaviour
         if (front >= 0 && CheckNear(frontPos))
         {
             current = front;
+
+            if (dict.TryGetValue(current, out List<int> list))
+            {
+                foreach (var item in list)
+                {
+                    _maze.TransIndex(item, out x, out y, out z);
+                    Vector3 pos = new Vector3(x, y, z) * _scale;
+                    Vector3 posDir = (pos - transform.position).normalized;
+                    float dot = Vector3.Dot(posDir, dir);
+                    if (dot > 0.7f)
+                    {
+                        backPos = frontPos;
+                        frontPos = pos;
+                        back = front;
+                        front = item;
+                        
+                        moveDir = posDir;
+                        break;
+                    }
+                }
+            }
         }
+        
+        {
+            Vector3 frontDir = frontPos - transform.position;
+            Vector3 backDir = backPos - transform.position;
+            frontDir.Normalize();
+            backDir.Normalize();
+            if (Vector3.Dot(frontDir, dir) > 0.7f)
+            {
+               
+                transform.position += frontDir * speed * SPEED_SCALE;
+            }
+            else if (Vector3.Dot(backDir, dir) > 0.7f)
+            {
+                
+                transform.position += backDir * speed * SPEED_SCALE;
+            }
+        }
+       
+
     }
 
     bool CheckNear(Vector3 point)

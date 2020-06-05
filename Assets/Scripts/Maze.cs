@@ -9,20 +9,25 @@ public class Maze : MonoBehaviour
     MazeMesh mesh;
     Dictionary<int, List<int>> dict;
     MeshFilter meshFilter;
-    public int x;
-    public int y;
-    public int z;
+    public Move move;
+    public int x = 5;
+    public int y = 5;
+    public int z = 5;
     public int seed;
 
     public int scale = 1;
     void Start()
     {
-        maze = new MazeData(seed,x,y,z);        
+        maze = new MazeData(seed,x,y,z);
+        move.BuildTree(maze,scale);
+        move.Init();
     }
 
     private void OnValidate()
     {
         maze = new MazeData(seed, x, y, z);
+        BuildMesh();
+        BuildTree();
     }
 
     private void OnDrawGizmos()
@@ -76,11 +81,11 @@ public class Maze : MonoBehaviour
 
     private void OnGUI()
     {
-        if (GUILayout.Button("Build Mesh"))
-        {
-            BuildMesh();
-            BuildTree();
-        }
+        //if (GUILayout.Button("Build Mesh"))
+        //{
+        //    BuildMesh();
+        //    BuildTree();
+        //}
     }
 
     void BuildMesh()
